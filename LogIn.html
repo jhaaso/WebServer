@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta name="description" content="" />
+  <meta charset="utf-8">
+  <title>Python Server Title</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+</head>
+
+<body>
+    <h1>User Login</h1>
+    <form method="post" action="/login">
+        <div>
+            <p>
+                <label>Username</label>
+                <input type="text" name="username" placeholder="username" />
+            </p>
+        </div>
+        <div>
+            <p>
+                <label>Password</label>
+                <input id="password" type="password" name="password" />
+            </p>
+        </div>
+        <div>
+            <p><input type="submit" value="Submit"/></p>
+        </div>
+    </form>
+    <div>
+        <button id="check" type="button">Check users</button>
+        <div id="display"></div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", (event) => {
+            document.getElementById("check").addEventListener("click", ()=>{
+                const xhttp = new XMLHttpRequest();
+                xhttp.onload = function() {
+                obj = JSON.parse(this.responseText);
+                document.getElementById("display").innerHTML="<span>" +  obj["content"] + "</span>"
+                console.log(this.responseText);
+                }
+                xhttp.open("GET", "/api/getAllUsers", true);
+                xhttp.send();   
+        })
+    })
+    </script>
+</body>
+</html>
