@@ -1,4 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
 
 hostName = "localhost"
 serverPort = 5000
@@ -18,15 +19,9 @@ users = [
     },
     {
     "username": "blade",
-    "password": "edalb" #encrypted: a=fasdfsafsdfj289fd
+    "password": "edalb"
     }
 ]
-
-def get_AllUsers():
-    ret = []
-    for user in users:
-        ret.append(user["username"])
-    return ','.join(ret)
 
 def authentication(userObj):
     for user in users:
@@ -37,12 +32,27 @@ def authentication(userObj):
 routes = {
     "static": {
         "/": open("index.html").read(),
-        "/about": "Copyright Reserved by Blade",
-        "/greeting": "Hello my friend",
-        "/login": open("login.html").read(),
     },
     "api": {
-    "/api/getAllUsers": get_AllUsers()
+        "get":{
+            "/api/login":{
+                "message": "Please login with your username and password.",
+                "view": open("login.partial.html").read()
+            },
+            "/api/logout":{
+                "message": "Please login with your username and password.",
+                "view": open("login.partial.html").read()
+            },
+            "/api/register":{
+                "message": "Please create a new user with username and password",
+                "view": open("register.partial.html").read()
+            }
+        },
+        "post":{
+            "/api/login":{
+                
+            }
+        }
     }
 }
 
@@ -51,26 +61,36 @@ class MyServer(BaseHTTPRequestHandler):
         if self.path in routes["static"]:
             self.http_header(200, "text/html")
             self.wfile.write(bytes(routes["static"][self.path], "utf-8"))
-        elif self.path.startswith("/api"): #http://localhost:5000/api/getallusers
+        elif self.path.startswith("/api"):
             self.http_header(200, "application/json")
-            self.wfile.write(bytes("{\"result\": \"OK\", \"content\": \"%s\"}" % routes["api"][self.path], "utf-8"))
+            obj = routes["api"]["get"][self.path]
+            self.wfile.write(bytes(json.dumps(obj), "utf-8"))
         else:
             self.http_header(404, "text/html")
             self.write(bytes("Page not found!", "utf-8"))
         return
     
     def do_POST(self):
-        print("Hit by a post request")
-        self.http_header(200, "text/html")
-        
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        userData = parse_FormData(post_data.decode("UTF-8"))
-        if authentication(userData):
-            self.wfile.write(bytes("Welcome, " + userData["username"], "UTF-8"))
+        if self.path.startswith("/api"):
+            self.http_header(200, "application/json")
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            formData = parse_FormData(post_data.decode("UTF-8"))
+            if self.path == "/api/login":
+                obj = self.userAuthenticate(formData)
+                self.rfile.write(bytes(json.dumps(obj), "utf-8")) #deserialize
+            elif self.path == "/api/register":
+                return
         else:
-            self.wfile.write(bytes("Username and password do not match.", "UTF-8"))
-        self.wfile.write(bytes("<a href=\"/login\">login</a>", "UTF-8"))
+            self.http_header(200, "text/html")
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            userData = parse_FormData(post_data.decode("UTF-8"))
+            if authentication(userData):
+                self.wfile.write(bytes("Welcome, " + userData["username"], "UTF-8"))
+            else:
+                self.wfile.write(bytes("Username and password do not match.", "UTF-8"))
+            self.wfile.write(bytes("<a href=\"/login\">login</a>", "UTF-8"))
         return
     
     def http_header(self, statuscode, contenttype):
@@ -78,7 +98,40 @@ class MyServer(BaseHTTPRequestHandler):
         self.send_header("Content-type", contenttype)
         self.end_headers()
     
-
+    def userAuthenticate(self, formData):
+        if authentication(formData):
+            return {
+                "status": 200,
+                "message": "Welcome, " + formData["username"],
+                "view": open("welcome.partial.html").read()
+            }
+        else:
+            return {
+                "status": 400,
+                "message": "Username and password do not match. Please type in again.",
+                "view": open("login.partial.html").read()
+            }
+    def userRegister(self, formData):
+        for user in users:
+            if user["username"] == formData["username"]:
+                return {
+                    "status": 400,
+                    "message": "The username has been taken. Please choose a different name.",
+                    "view": open("register.partial.html").read()
+                }
+        if formData["password1"] != formData["password2"]:
+            return {
+                "status": 400,
+                "message": "The password confirmation is not the same as the original one.",
+                "view": open("register.partial.html").read()
+            }
+        else:
+            users.append(formData)
+            return {
+                "status": 200,
+                "message": "Welcome, new user " + formData["username"],
+                "view": open("welcome.partial.html").read()
+            }
 
 if __name__ == "__main__":
     webServer = HTTPServer((hostName, serverPort), MyServer)
