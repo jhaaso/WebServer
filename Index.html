@@ -1,29 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Single Page Web App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+  </head>
+  <body>
+    <div>
+        <p id="message-tag"></p>
+    </div>
+    <div id="viewbody">
 
-<head>
-  <meta name="description" content="" />
-  <meta charset="utf-8">
-  <title>Python Server Title</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="author" content="">
-  <link rel="stylesheet" href="css/style.css">
-  <script src="http://code.jquery.com/jquery-latest.min.js"></script>
-</head>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+    <script>
+      $(document).ready(function(){
+        $.get("/api/login").done(function(data){
+          SetMessage(data);
+          HookViewElement(data);
+        })
+        function HookViewElement(data){
+          $("#register-toggle-btn").click(function(event){
+            event.preventDefault();
+            $.get("/api/register").done(function(respData){
+              SetMessage(respData);
+              HookViewElement(respData);
+            })
+          });
+          $("#login-btn").click(function(event){
+            event.preventDefault();
+            $.post("/api/login",{
+              username: $("#login-username").val(),
+              password: $("#login-password").val()//deserialize
+            }).done(function(resData){
+              SetMessage(resData);
+              HookViewElement(resData);
+            });
+          });
+          $("#register-btn").click(function(event){
+            event.preventDefault();
+            $.post("/api/registeer", {
+              username: $("#register-username").val(),
+              password1: $("#register-password-1").val(),
+              password2: $("#register-password-2").val(),
+            }).done(function(respData){
+              SetMessage(respData);
+              HookViewElement(respData);
+            })
+          });
+          $("#login-toggle-btn").click(function(event){
+            event.preventDefault();
+            $.get("/api/login").done(function(respdata){
+              SetMessage(respData);
+              HookViewElement(respData);
+            });
+          });
+          $("#logout-bt").click(function(event){
+            event.preventDefault();
+            $.get("/api/login").done(function(respdata){
+              SetMessage(respData);
+              HookViewElement(respData);
+            });
+          })
+        }
 
-<body>
-  
-<div class="container">
-    <h1>This is my Home!</h1>
-    <p>Welcome to CSC 440</p>
-    <p><i>networks</i>&nbsp;<span>&</span><b>Security</b>!</p>
-    <p><a href="/about">About</a></p>
-    <p><a href="/greeting">Greeting</a></p>
-    <p><a href="/login">Login</a></p>
-</div>
-
-<script>
-</script>
-
-</body>
+        function SetMessage(data){
+          $("#message-tag").text(data.message);
+        }
+      })
+        window.addEventListener('DOMContentLoaded', (event) => {
+            $.ajax({
+                url: "/api/login"
+            }).done(function(data) {
+                document.getElementById("message-tag").innerText = data.message;
+                document.getElementById("viewbody").innerHTML = data.view;
+            });
+        });
+    </script>
+  </body>
 </html>
