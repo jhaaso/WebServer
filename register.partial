@@ -1,0 +1,16 @@
+<form id="register-form" method="post" action="/register">
+    <div>
+        <label>Username</label>
+        <input type="text" id="register-username" name="username" />
+    </div>
+    <div>
+        <label>Password</label>
+        <input type="password" id="register-password-1" name="password1" />
+    </div>
+    <div>
+        <label>Confirm Your Password</label>
+        <input type="password" id="register-password-2" name="password2" />
+    </div>
+    <a id="register-btn" href="#" class="btn btn-primary">Submit</a>
+</form>
+<button id="login-toggle-btn">Sign In</button>
